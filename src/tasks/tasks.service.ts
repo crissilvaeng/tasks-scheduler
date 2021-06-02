@@ -4,15 +4,20 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Task, TaskDocument } from './schemas/task.schema';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class TasksService {
 
-  constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) { }
+  constructor(
+    @InjectQueue('jobs.queue') private jobsQueue: Queue,
+    @InjectModel(Task.name) private taskModel: Model<TaskDocument>) { }
 
   create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const task = new this.taskModel(createTaskDto); 
-    return task.save();
+    const task = new this.taskModel(createTaskDto);
+    return this.jobsQueue.add(createTaskDto)
+      .then(() => task.save())
   }
 
   findAll(): Promise<Task[]|null>  {
@@ -21,13 +26,5 @@ export class TasksService {
 
   findOne(id: string): Promise<Task|null> {
     return this.taskModel.findById(id).exec();
-  }
-
-  update(id: string, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
-  }
-
-  remove(id: string) {
-    return `This action removes a #${id} task`;
   }
 }
