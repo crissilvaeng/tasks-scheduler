@@ -15,19 +15,19 @@ export class TasksService {
     return task.save();
   }
 
-  findAll() {
-    return `This action returns all tasks`;
+  findAll(): Promise<Task[]|null>  {
+    return this.taskModel.find({}).exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  findOne(id: string): Promise<Task|null> {
+    return this.taskModel.findById(id).exec();
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
+  update(id: string, updateTaskDto: UpdateTaskDto) {
     return `This action updates a #${id} task`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} task`;
   }
 }
