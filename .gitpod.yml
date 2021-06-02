@@ -1,0 +1,16 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - init: yarn install
+  - command: yarn start:debug
+  - command: mkdir -p /workspace/data && mongod --dbpath /workspace/data
+  - command: redis-server
+
+ports:
+  - port: 3000
+    onOpen: open-preview
+
+github:
+  prebuilds:
+    main: true
