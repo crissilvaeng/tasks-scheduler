@@ -18,7 +18,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "console:dev": "ts-node -r tsconfig-paths/register src/console.ts",
+    "console": "node dist/console.js"
   },
   "dependencies": {
     "@nestjs/common": "^7.6.15",
@@ -28,11 +30,14 @@
     "@nestjs/platform-express": "^7.6.15",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
+    "commander": "^7.2.0",
     "moment": "^2.29.1",
     "mongoose": "^5.12.12",
+    "nestjs-console": "^5.0.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^6.6.6"
+    "rxjs": "^6.6.6",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.6.0",

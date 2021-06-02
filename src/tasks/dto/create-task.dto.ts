@@ -4,8 +4,8 @@ import * as moment from 'moment';
 export class CreateTaskDto {
 
     @IsUrl({ require_tld: false })
-    webhook: string;
+    readonly webhook: string;
 
     @Min(moment().unix())
-    ttl: number;
+    readonly ttl: number;
 }
