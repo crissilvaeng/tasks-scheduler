@@ -5,11 +5,14 @@ import { Credential, CredentialDocument } from './schemas/credential.schema';
 import { v4 as uuidv4 } from 'uuid'
 import * as crypto from 'crypto'
 import { CredentialStatus } from './schemas/credential.schema'
+import { ConfigService } from '@nestjs/config'
 
 @Console()
 export class CredentialsService {
 
-    constructor(@InjectModel(Credential.name) private credentialModel: Model<CredentialDocument>) { }
+    constructor(
+        private configService: ConfigService,
+        @InjectModel(Credential.name) private credentialModel: Model<CredentialDocument>) { }
 
     @Command({
         command: 'create',
@@ -17,7 +20,8 @@ export class CredentialsService {
     })
     async create(): Promise<void> {
         const apiKey = uuidv4()
-        const apiSecret = crypto.createHmac('sha256', 'my scret').update(apiKey).digest('hex')
+        const apiSecret = crypto.createHmac('sha256', this.configService.get<string>('SECRET_KEY'))
+            .update(apiKey).digest('hex')
         return new this.credentialModel({ apiKey })
             .save()
             .then(() => {
