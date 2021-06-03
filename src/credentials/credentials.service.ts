@@ -25,8 +25,8 @@ export class CredentialsService {
         return new this.credentialModel({ apiKey })
             .save()
             .then(() => {
-                console.log(`Api-Key: ${apiKey}`)
-                console.log(`Api-Secret: ${apiSecret}`)
+                console.log(`X-API-Key ${apiKey}`)
+                console.log(`X-API-Secret ${apiSecret}`)
             })
             .catch((err) => console.log(err));
     }

@@ -1,6 +1,7 @@
-
 POST http://localhost:3000 HTTP/1.1
-content-type: application/json
+Content-Type: application/json
+X-API-Key: 099a3cb7-68b9-4d98-887e-f8f6d8b094e8
+X-API-Secret: 8c97e0b33656082e546ca7abb1246a01914dabbc087f0722b196636a3b32d0cf
 
 {
     "webhook": "http://localhost:3000/webhook",
