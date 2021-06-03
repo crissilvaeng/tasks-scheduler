@@ -5,9 +5,12 @@ import { ConsoleModule } from 'nestjs-console';
 import { CredentialsModule } from './credentials/credentials.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { MorganModule, MorganInterceptor } from "nest-morgan";
 
 @Module({
   imports: [
+    MorganModule,
     ConsoleModule,
     TasksModule,
     CredentialsModule,
@@ -26,6 +29,12 @@ import { BullModule } from '@nestjs/bull';
       }),
       inject: [ConfigService],
     }),
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MorganInterceptor("combined"),
+    },
   ],
 })
 export class AppModule {}

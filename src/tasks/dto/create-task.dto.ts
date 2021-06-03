@@ -6,6 +6,6 @@ export class CreateTaskDto {
     @IsUrl({ require_tld: false })
     readonly webhook: string;
 
-    @Min(moment().unix())
+    @Min(moment().valueOf())
     readonly ttl: number;
 }
