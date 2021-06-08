@@ -7,6 +7,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MorganModule, MorganInterceptor } from 'nest-morgan';
 import { CredentialsModule } from './credentials/credentials.module';
+import { AuthModule } from './auth/auth.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { CredentialsModule } from './credentials/credentials.module';
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
   ],
   providers: [
     {
@@ -37,5 +40,6 @@ import { CredentialsModule } from './credentials/credentials.module';
       useClass: MorganInterceptor('combined'),
     },
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

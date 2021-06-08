@@ -44,7 +44,7 @@ export class CredentialsService {
         })
         .catch((err) =>
           reject(
-            `Failed to create a credentials key pair. Reason: ${err.message}`,
+            `Failed to create a credentials key pair. Reason: ${err.message}.`,
           ),
         );
     });
@@ -77,7 +77,7 @@ export class CredentialsService {
         })
         .catch((err) =>
           reject(
-            `Failed to update status to ${apiKey}. Reason: ${err.message}`,
+            `Failed to update status to ${apiKey}. Reason: ${err.message}.`,
           ),
         );
     });

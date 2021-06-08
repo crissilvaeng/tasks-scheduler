@@ -15,6 +15,20 @@ export class CredentialsRepository {
     return this.credentialModel.create({ ...keyPair });
   }
 
+  retrieve(keyPair: KeyPair): Promise<KeyPair> {
+    return new Promise((resolve, reject) => {
+      return this.credentialModel
+        .findOne({ apiKey: keyPair.apiKey, status: keyPair.status })
+        .then((data) => {
+          if (data) {
+            return resolve({ ...data });
+          }
+          return reject('api key not found');
+        })
+        .catch((err) => reject(err));
+    });
+  }
+
   update(keyPair: KeyPair): Promise<KeyPair> {
     return new Promise((resolve, reject) => {
       return this.credentialModel
@@ -23,7 +37,7 @@ export class CredentialsRepository {
           if (n) {
             return resolve(keyPair);
           }
-          return reject('api key not found.');
+          return reject('api key not found');
         })
         .catch((err) => reject(err));
     });

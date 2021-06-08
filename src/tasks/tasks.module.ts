@@ -1,6 +1,5 @@
 import { Module, HttpModule } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { AuthService } from './auth.service';
 import { TasksController } from './tasks.controller';
 import { BullModule } from '@nestjs/bull';
 import { TasksProcessor } from './tasks.processor';
@@ -19,6 +18,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     ]),
   ],
   controllers: [TasksController],
-  providers: [TasksService, TasksProcessor, AuthService],
+  providers: [TasksService, TasksProcessor],
 })
 export class TasksModule {}
