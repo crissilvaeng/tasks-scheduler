@@ -3,15 +3,9 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { CredentialsService } from './credentials.service';
-import {
-  Credential,
-  CredentialDocument,
-} from './schemas/credential.schema';
+import { Credential, CredentialDocument } from './schemas/credential.schema';
 
 describe('CredentialsService', () => {
-  const MOCK_API_KEY = 'API_KEY';
-  const MOCK_SECRET_KEY = 'SECRET_KEY';
-
   let configService: ConfigService;
   let credentialsService: CredentialsService;
   let credentialModel: Model<CredentialDocument>;
@@ -21,7 +15,7 @@ describe('CredentialsService', () => {
       providers: [
         {
           provide: getModelToken(Credential.name),
-          useValue: credentialModel,
+          useValue: Model,
         },
         ConfigService,
         CredentialsService,
@@ -36,20 +30,62 @@ describe('CredentialsService', () => {
   });
 
   describe('create', () => {
-    it('should fail when secret key in undefined', async () => {
-      const spy = jest
+    it('should fail when secret key in undefined', () => {
+      // arrange
+      const configServiceSpy = jest
         .spyOn(configService, 'get')
         .mockReturnValueOnce(undefined);
-      await expect(
-        credentialsService.create(MOCK_API_KEY),
-      ).rejects.toThrowError(/argument must be of type string/);
-      expect(spy).toBeCalled();
+
+      // act
+      const actual = expect(credentialsService.create('API_KEY'));
+
+      // assert
+      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
+      return actual.rejects.toMatch(/missing SECRET_KEY configuration/);
     });
-    it('should create key pair', async () => {
-      jest.spyOn(configService, 'get').mockReturnValueOnce(MOCK_SECRET_KEY);
-      await expect(credentialsService.create(MOCK_API_KEY)).resolves.toEqual(
-        {},
-      );
+
+    it('should fail when api key already exists', () => {
+      // arrange
+      const configServiceSpy = jest
+        .spyOn(configService, 'get')
+        .mockReturnValueOnce('SECRET_KEY');
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'create')
+        .mockImplementationOnce(() =>
+          Promise.reject(new Error('duplicate key error collection')),
+        );
+
+      // act
+      const actual = expect(credentialsService.create('API_KEY'));
+
+      // assert
+      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
+      expect(credentialModelSpy).toBeCalledWith({ apiKey: 'API_KEY' });
+
+      return actual.rejects.toMatch(/duplicate key error collection/);
+    });
+
+    it('should create a credentials key pair', () => {
+      // arrange
+      const configServiceSpy = jest
+        .spyOn(configService, 'get')
+        .mockReturnValueOnce('SECRET_KEY');
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'create')
+        .mockImplementationOnce(() => Promise.resolve());
+
+      // act
+      const actual = expect(credentialsService.create('API_KEY'));
+
+      // assert
+      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
+      expect(credentialModelSpy).toBeCalledWith({ apiKey: 'API_KEY' });
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        apiSecret:
+          '3783823e89b520104f8ceec4a0606b041ae4daaceda05d6f649ead01e775079b',
+      });
     });
   });
 

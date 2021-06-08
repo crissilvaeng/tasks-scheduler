@@ -7,6 +7,7 @@ const bootstrap = new BootstrapConsole({
 });
 
 bootstrap.init().then(async (app) => {
+  app.useLogger(['log']);
   try {
     await app.init();
     await bootstrap.boot();

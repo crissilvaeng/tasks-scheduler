@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { CredentialsService } from './credentials.service';
 import { Credential, CredentialSchema } from './schemas/credential.schema';
-import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -11,4 +11,4 @@ import { MongooseModule } from '@nestjs/mongoose';
   ],
   providers: [CredentialsService],
 })
-export class CredentialsModule  {}
+export class CredentialsModule {}

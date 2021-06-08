@@ -5,7 +5,6 @@ import { Logger, HttpService } from '@nestjs/common';
 
 @Processor('jobs.queue')
 export class TasksProcessor {
-
   private readonly logger = new Logger(TasksProcessor.name);
 
   constructor(private httpService: HttpService) {}

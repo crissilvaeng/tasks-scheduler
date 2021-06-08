@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import { Model } from 'mongoose';
+import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Console, Command } from 'nestjs-console';
@@ -9,6 +10,8 @@ import { Credential, CredentialDocument } from './schemas/credential.schema';
 
 @Console()
 export class CredentialsService {
+  private readonly logger = new Logger(CredentialsService.name);
+
   constructor(
     private configService: ConfigService,
     @InjectModel(Credential.name)
@@ -21,23 +24,31 @@ export class CredentialsService {
   })
   create(apiKey: string): Promise<KeyPair> {
     return new Promise(async (resolve, reject) => {
-      const secretKey = this.configService.get<string>('SECRET_KEY')
+      const secretKey = this.configService.get<string>('SECRET_KEY');
       if (!secretKey) {
-        reject('chave vazia')
+        return reject(
+          `Failed to create a private key for ${apiKey}. Reason: missing SECRET_KEY configuration.`,
+        );
       }
-      const apiSecret = crypto.createHmac('sha256', secretKey)
+      const apiSecret = crypto
+        .createHmac('sha256', secretKey)
         .update(apiKey)
         .digest('hex');
-      return await this.credentialModel.create({ apiKey })
+      return await this.credentialModel
+        .create({ apiKey })
         .then(() => {
-          console.log(`X-API-Key ${apiKey}`);
-          console.log(`X-API-Secret ${apiSecret}`);
+          this.logger.log(`X-API-Key ${apiKey}`);
+          this.logger.log(`X-API-Secret ${apiSecret}`);
           return resolve({ apiKey, apiSecret });
         })
-        .catch((err) => reject(`Failed to create a private key for ${apiKey}. Reason: ${err.message}`));
+        .catch((err) =>
+          reject(
+            `Failed to create a private key for ${apiKey}. Reason: ${err.message}`,
+          ),
+        );
     });
   }
-  
+
   @Command({
     command: 'enable <api-key>',
     description: 'enable api key',
