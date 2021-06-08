@@ -71,27 +71,51 @@ export class CredentialsService {
     command: 'enable <api-key>',
     description: 'enable api key',
   })
-  async enable(apiKey: string): Promise<CredentialDocument> {
-    return this.credentialModel
-      .findOneAndUpdate(
-        { apiKey },
-        { status: CredentialStatus.Enable },
-        { useFindAndModify: false },
-      )
-      .exec();
+  enable(apiKey: string): Promise<KeyPair> {
+    return new Promise((resolve, reject) => {
+      return this.credentialModel
+        .updateOne({ apiKey }, { status: CredentialStatus.Enable })
+        .then(({ n }) => {
+          if (n) {
+            this.logger.log(`X-API-Key ${apiKey}`);
+            this.logger.log(`Status: ${CredentialStatus.Enable}`);
+            return resolve({ apiKey, status: CredentialStatus.Enable });
+          }
+          return reject(
+            `Failed to update status to ${apiKey}. Reason: api key not found.`,
+          );
+        })
+        .catch((err) =>
+          reject(
+            `Failed to update status to ${apiKey}. Reason: ${err.message}`,
+          ),
+        );
+    });
   }
 
   @Command({
     command: 'disable <api-key>',
     description: 'disable api key',
   })
-  async disable(apiKey: string): Promise<CredentialDocument> {
-    return this.credentialModel
-      .findOneAndUpdate(
-        { apiKey },
-        { status: CredentialStatus.Disable },
-        { useFindAndModify: false },
-      )
-      .exec();
+  async disable(apiKey: string): Promise<KeyPair> {
+    return new Promise((resolve, reject) => {
+      return this.credentialModel
+        .updateOne({ apiKey }, { status: CredentialStatus.Disable })
+        .then(({ n }) => {
+          if (n) {
+            this.logger.log(`X-API-Key ${apiKey}`);
+            this.logger.log(`Status: ${CredentialStatus.Disable}`);
+            return resolve({ apiKey, status: CredentialStatus.Disable });
+          }
+          return reject(
+            `Failed to update status to ${apiKey}. Reason: api key not found.`,
+          );
+        })
+        .catch((err) =>
+          reject(
+            `Failed to update status to ${apiKey}. Reason: ${err.message}`,
+          ),
+        );
+    });
   }
 }

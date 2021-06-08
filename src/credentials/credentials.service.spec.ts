@@ -129,6 +129,198 @@ describe('CredentialsService', () => {
     });
   });
 
+  describe('enable', () => {
+    it('shoud fail when api key does not exists', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 0, nModified: 0, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.enable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Enable',
+        },
+      );
+
+      return actual.rejects.toMatch(/api key not found/);
+    });
+
+    it('shoud fail when moongose raises a unknow error', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockRejectedValueOnce(new Error('unknow error'));
+
+      // act
+      const actual = expect(credentialsService.enable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Enable',
+        },
+      );
+
+      return actual.rejects.toMatch(/unknow error/);
+    });
+
+    it('shoud update api key status', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 1, nModified: 1, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.enable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Enable',
+        },
+      );
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        status: 'Enable',
+      });
+    });
+
+    it('shoud ignore update without modification', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 1, nModified: 0, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.enable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Enable',
+        },
+      );
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        status: 'Enable',
+      });
+    });
+  });
+
+  describe('disable', () => {
+    it('shoud fail when api key does not exists', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 0, nModified: 0, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.disable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Disable',
+        },
+      );
+
+      return actual.rejects.toMatch(/api key not found/);
+    });
+
+    it('shoud fail when moongose raises a unknow error', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockRejectedValueOnce(new Error('unknow error'));
+
+      // act
+      const actual = expect(credentialsService.disable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Disable',
+        },
+      );
+
+      return actual.rejects.toMatch(/unknow error/);
+    });
+
+    it('shoud update api key status', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 1, nModified: 1, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.disable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Disable',
+        },
+      );
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        status: 'Disable',
+      });
+    });
+
+    it('shoud ignore update without modification', () => {
+      // arrange
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'updateOne')
+        .mockResolvedValueOnce({ n: 1, nModified: 0, ok: 1 });
+
+      // act
+      const actual = expect(credentialsService.disable('API_KEY'));
+
+      // assert
+      expect(credentialModelSpy).toBeCalledWith(
+        {
+          apiKey: 'API_KEY',
+        },
+        {
+          status: 'Disable',
+        },
+      );
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        status: 'Disable',
+      });
+    });
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });

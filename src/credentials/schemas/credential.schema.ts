@@ -24,6 +24,11 @@ export class Credential {
     required: true,
   })
   status: string;
+
+  @Prop({
+    required: false,
+  })
+  salt: string;
 }
 
 export const CredentialSchema = SchemaFactory.createForClass(Credential);
