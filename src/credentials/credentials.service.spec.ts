@@ -37,7 +37,7 @@ describe('CredentialsService', () => {
         .mockReturnValueOnce(undefined);
 
       // act
-      const actual = expect(credentialsService.create('API_KEY'));
+      const actual = expect(credentialsService.create('API_KEY', {}));
 
       // assert
       expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
@@ -56,35 +56,75 @@ describe('CredentialsService', () => {
         );
 
       // act
-      const actual = expect(credentialsService.create('API_KEY'));
+      const actual = expect(credentialsService.create('API_KEY', {}));
 
       // assert
       expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      expect(credentialModelSpy).toBeCalledWith({ apiKey: 'API_KEY' });
+      expect(credentialModelSpy).toBeCalledWith({
+        apiKey: 'API_KEY',
+        status: 'Disable',
+      });
 
       return actual.rejects.toMatch(/duplicate key error collection/);
     });
 
-    it('should create a credentials key pair', () => {
+    it('should create a disable credentials key pair', () => {
       // arrange
       const configServiceSpy = jest
         .spyOn(configService, 'get')
         .mockReturnValueOnce('SECRET_KEY');
       const credentialModelSpy = jest
         .spyOn(credentialModel, 'create')
-        .mockImplementationOnce(() => Promise.resolve());
+        .mockImplementationOnce(() =>
+          Promise.resolve({ apiKey: 'API_KEY', status: 'Disable' }),
+        );
 
       // act
-      const actual = expect(credentialsService.create('API_KEY'));
+      const actual = expect(credentialsService.create('API_KEY', {}));
 
       // assert
       expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      expect(credentialModelSpy).toBeCalledWith({ apiKey: 'API_KEY' });
+      expect(credentialModelSpy).toBeCalledWith({
+        apiKey: 'API_KEY',
+        status: 'Disable',
+      });
 
       return actual.resolves.toEqual({
         apiKey: 'API_KEY',
         apiSecret:
           '3783823e89b520104f8ceec4a0606b041ae4daaceda05d6f649ead01e775079b',
+        status: 'Disable',
+      });
+    });
+
+    it('should create a enable credentials key pair', () => {
+      // arrange
+      const configServiceSpy = jest
+        .spyOn(configService, 'get')
+        .mockReturnValueOnce('SECRET_KEY');
+      const credentialModelSpy = jest
+        .spyOn(credentialModel, 'create')
+        .mockImplementationOnce(() =>
+          Promise.resolve({ apiKey: 'API_KEY', status: 'Enable' }),
+        );
+
+      // act
+      const actual = expect(
+        credentialsService.create('API_KEY', { enable: true }),
+      );
+
+      // assert
+      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
+      expect(credentialModelSpy).toBeCalledWith({
+        apiKey: 'API_KEY',
+        status: 'Enable',
+      });
+
+      return actual.resolves.toEqual({
+        apiKey: 'API_KEY',
+        apiSecret:
+          '3783823e89b520104f8ceec4a0606b041ae4daaceda05d6f649ead01e775079b',
+        status: 'Enable',
       });
     });
   });

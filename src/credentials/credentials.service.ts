@@ -8,6 +8,10 @@ import { KeyPair } from './interfaces/keypair.interface';
 import { CredentialStatus } from './schemas/credential.schema';
 import { Credential, CredentialDocument } from './schemas/credential.schema';
 
+interface Options {
+  enable?: boolean;
+}
+
 @Console()
 export class CredentialsService {
   private readonly logger = new Logger(CredentialsService.name);
@@ -21,8 +25,14 @@ export class CredentialsService {
   @Command({
     command: 'create <api-key>',
     description: 'create api key',
+    options: [
+      {
+        flags: '-e, --enable',
+        required: false,
+      },
+    ],
   })
-  create(apiKey: string): Promise<KeyPair> {
+  create(apiKey: string, options: Options): Promise<KeyPair> {
     return new Promise(async (resolve, reject) => {
       const secretKey = this.configService.get<string>('SECRET_KEY');
       if (!secretKey) {
@@ -34,12 +44,20 @@ export class CredentialsService {
         .createHmac('sha256', secretKey)
         .update(apiKey)
         .digest('hex');
+      const status = options.enable
+        ? CredentialStatus.Enable
+        : CredentialStatus.Disable;
       return await this.credentialModel
-        .create({ apiKey })
-        .then(() => {
-          this.logger.log(`X-API-Key ${apiKey}`);
+        .create({ apiKey, status })
+        .then((data) => {
+          this.logger.log(`X-API-Key ${data.apiKey}`);
           this.logger.log(`X-API-Secret ${apiSecret}`);
-          return resolve({ apiKey, apiSecret });
+          this.logger.log(`Status: ${data.status}`);
+          return resolve({
+            apiKey: data.apiKey,
+            apiSecret,
+            status: data.status,
+          });
         })
         .catch((err) =>
           reject(
