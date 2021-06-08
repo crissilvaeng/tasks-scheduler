@@ -4,7 +4,11 @@ import { Credential, CredentialSchema } from './schemas/credential.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Credential.name, schema: CredentialSchema }])],
-  providers: [CredentialsService]
+  imports: [
+    MongooseModule.forFeature([
+      { name: Credential.name, schema: CredentialSchema },
+    ]),
+  ],
+  providers: [CredentialsService],
 })
-export class CredentialsModule {}
+export class CredentialsModule  {}

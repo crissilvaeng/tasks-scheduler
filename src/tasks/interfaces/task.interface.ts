@@ -1,4 +1,4 @@
 export interface Task {
-    readonly webhook: string;
-    readonly ttl: number;
+  readonly webhook: string;
+  readonly ttl: number;
 }

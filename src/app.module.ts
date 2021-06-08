@@ -1,24 +1,25 @@
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Module } from '@nestjs/common';
-import { TasksModule } from './tasks/tasks.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConsoleModule } from 'nestjs-console';
-import { CredentialsModule } from './credentials/credentials.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
-import { APP_INTERCEPTOR } from "@nestjs/core";
-import { MorganModule, MorganInterceptor } from "nest-morgan";
+import { TerminusModule } from '@nestjs/terminus';
+import { MongooseModule } from '@nestjs/mongoose';
+import { TasksModule } from './tasks/tasks.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MorganModule, MorganInterceptor } from 'nest-morgan';
+import { CredentialsModule } from './credentials/credentials.module';
 
 @Module({
   imports: [
-    MorganModule,
-    ConsoleModule,
     TasksModule,
+    MorganModule,
+    TerminusModule,
     CredentialsModule,
     ConfigModule.forRoot({ envFilePath: '.development.env', isGlobal: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         uri: config.get('MONGO_URL'),
+        useCreateIndex: true,
       }),
       inject: [ConfigService],
     }),
@@ -33,7 +34,7 @@ import { MorganModule, MorganInterceptor } from "nest-morgan";
   providers: [
     {
       provide: APP_INTERCEPTOR,
-      useClass: MorganInterceptor("combined"),
+      useClass: MorganInterceptor('combined'),
     },
   ],
 })
