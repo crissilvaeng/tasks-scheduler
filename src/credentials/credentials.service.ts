@@ -1,12 +1,9 @@
-import * as crypto from 'crypto';
-import { Model } from 'mongoose';
 import { Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { ConfigService } from '@nestjs/config';
-import { Console, Command } from 'nestjs-console';
+import { Command, Console } from 'nestjs-console';
+import { KeyPairFactory } from './factories/keypair.factory';
 import { KeyPair } from './interfaces/keypair.interface';
+import { CredentialsRepository } from './repositories/credentials.repository';
 import { CredentialStatus } from './schemas/credential.schema';
-import { Credential, CredentialDocument } from './schemas/credential.schema';
 
 interface Options {
   enable?: boolean;
@@ -17,13 +14,12 @@ export class CredentialsService {
   private readonly logger = new Logger(CredentialsService.name);
 
   constructor(
-    private configService: ConfigService,
-    @InjectModel(Credential.name)
-    private credentialModel: Model<CredentialDocument>,
+    private readonly keyPairFactory: KeyPairFactory,
+    private readonly credentialsRepository: CredentialsRepository,
   ) {}
 
   @Command({
-    command: 'create <api-key>',
+    command: 'create',
     description: 'create api key',
     options: [
       {
@@ -32,36 +28,23 @@ export class CredentialsService {
       },
     ],
   })
-  create(apiKey: string, options: Options): Promise<KeyPair> {
+  create(options: Options): Promise<KeyPair> {
     return new Promise(async (resolve, reject) => {
-      const secretKey = this.configService.get<string>('SECRET_KEY');
-      if (!secretKey) {
-        return reject(
-          `Failed to create a private key for ${apiKey}. Reason: missing SECRET_KEY configuration.`,
-        );
-      }
-      const apiSecret = crypto
-        .createHmac('sha256', secretKey)
-        .update(apiKey)
-        .digest('hex');
       const status = options.enable
         ? CredentialStatus.Enable
         : CredentialStatus.Disable;
-      return await this.credentialModel
-        .create({ apiKey, status })
+      const keyPair = this.keyPairFactory.create(status);
+      return this.credentialsRepository
+        .create(keyPair)
         .then((data) => {
           this.logger.log(`X-API-Key ${data.apiKey}`);
-          this.logger.log(`X-API-Secret ${apiSecret}`);
+          this.logger.log(`X-API-Secret ${keyPair.apiSecret}`);
           this.logger.log(`Status: ${data.status}`);
-          return resolve({
-            apiKey: data.apiKey,
-            apiSecret,
-            status: data.status,
-          });
+          return resolve(keyPair);
         })
         .catch((err) =>
           reject(
-            `Failed to create a private key for ${apiKey}. Reason: ${err.message}`,
+            `Failed to create a credentials key pair. Reason: ${err.message}`,
           ),
         );
     });
@@ -72,25 +55,7 @@ export class CredentialsService {
     description: 'enable api key',
   })
   enable(apiKey: string): Promise<KeyPair> {
-    return new Promise((resolve, reject) => {
-      return this.credentialModel
-        .updateOne({ apiKey }, { status: CredentialStatus.Enable })
-        .then(({ n }) => {
-          if (n) {
-            this.logger.log(`X-API-Key ${apiKey}`);
-            this.logger.log(`Status: ${CredentialStatus.Enable}`);
-            return resolve({ apiKey, status: CredentialStatus.Enable });
-          }
-          return reject(
-            `Failed to update status to ${apiKey}. Reason: api key not found.`,
-          );
-        })
-        .catch((err) =>
-          reject(
-            `Failed to update status to ${apiKey}. Reason: ${err.message}`,
-          ),
-        );
-    });
+    return this.toggle(apiKey, CredentialStatus.Enable);
   }
 
   @Command({
@@ -98,18 +63,17 @@ export class CredentialsService {
     description: 'disable api key',
   })
   async disable(apiKey: string): Promise<KeyPair> {
+    return this.toggle(apiKey, CredentialStatus.Disable);
+  }
+
+  private toggle(apiKey: string, status: CredentialStatus): Promise<KeyPair> {
     return new Promise((resolve, reject) => {
-      return this.credentialModel
-        .updateOne({ apiKey }, { status: CredentialStatus.Disable })
-        .then(({ n }) => {
-          if (n) {
-            this.logger.log(`X-API-Key ${apiKey}`);
-            this.logger.log(`Status: ${CredentialStatus.Disable}`);
-            return resolve({ apiKey, status: CredentialStatus.Disable });
-          }
-          return reject(
-            `Failed to update status to ${apiKey}. Reason: api key not found.`,
-          );
+      return this.credentialsRepository
+        .update({ apiKey, status })
+        .then((keypair) => {
+          this.logger.log(`X-API-Key ${keypair.apiKey}`);
+          this.logger.log(`Status: ${keypair.status}`);
+          return resolve(keypair);
         })
         .catch((err) =>
           reject(

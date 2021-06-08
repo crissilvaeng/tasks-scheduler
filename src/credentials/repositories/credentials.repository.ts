@@ -1,15 +1,14 @@
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { Credential, CredentialDocument } from '../schemas/credential.schema';
-
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { KeyPair } from '../interfaces/keypair.interface';
+import { Credential, CredentialDocument } from '../schemas/credential.schema';
 
 @Injectable()
 export class CredentialsRepository {
   constructor(
     @InjectModel(Credential.name)
-    private credentialModel: Model<CredentialDocument>,
+    private readonly credentialModel: Model<CredentialDocument>,
   ) {}
 
   create(keyPair: KeyPair): Promise<KeyPair> {

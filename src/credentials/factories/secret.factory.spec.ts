@@ -1,27 +1,27 @@
-import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test } from '@nestjs/testing';
 import { SecretFactory } from './secret.factory';
 
 describe('SecretFactory', () => {
-  let configService: ConfigService;
-  let secretFactory: SecretFactory;
+  let config: ConfigService;
+  let factory: SecretFactory;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [ConfigService, SecretFactory],
     }).compile();
 
-    configService = moduleRef.get<ConfigService>(ConfigService);
-    secretFactory = moduleRef.get<SecretFactory>(SecretFactory);
+    config = moduleRef.get<ConfigService>(ConfigService);
+    factory = moduleRef.get<SecretFactory>(SecretFactory);
   });
 
   it('should fail when secret key is undefined', () => {
     // arrange
-    const spy = jest.spyOn(configService, 'get').mockReturnValueOnce(undefined);
+    const spy = jest.spyOn(config, 'get').mockReturnValueOnce(undefined);
 
     // act
     const actual = expect(() => {
-      secretFactory.create('API_KEY');
+      factory.create('API_KEY');
     });
 
     // assert
@@ -31,12 +31,10 @@ describe('SecretFactory', () => {
 
   it('should return secret', () => {
     // arrange
-    const spy = jest
-      .spyOn(configService, 'get')
-      .mockReturnValueOnce('SECRET_KEY');
+    const spy = jest.spyOn(config, 'get').mockReturnValueOnce('SECRET_KEY');
 
     // act
-    const actual = expect(secretFactory.create('API_KEY'));
+    const actual = expect(factory.create('API_KEY'));
 
     // assert
     actual.toEqual(
@@ -47,12 +45,10 @@ describe('SecretFactory', () => {
 
   it('should return secret when has salt', () => {
     // arrange
-    const spy = jest
-      .spyOn(configService, 'get')
-      .mockReturnValueOnce('SECRET_KEY');
+    const spy = jest.spyOn(config, 'get').mockReturnValueOnce('SECRET_KEY');
 
     // act
-    const actual = expect(secretFactory.create('API_KEY', 'SALT'));
+    const actual = expect(factory.create('API_KEY', 'SALT'));
 
     // assert
     actual.toEqual(

@@ -1,11 +1,10 @@
-import * as crypto from 'crypto';
-
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class SecretFactory {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
 
   create(key: string, salt = ''): string {
     const secretKey = this.configService.get<string>('SECRET_KEY');

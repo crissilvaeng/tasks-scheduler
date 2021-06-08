@@ -1,14 +1,19 @@
-import { Model } from 'mongoose';
+import { KeyPair } from './interfaces/keypair.interface';
+import { SecretFactory } from './factories/secret.factory';
+import { SaltFactory } from './factories/salt.factory';
 import { Test } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
 import { CredentialsService } from './credentials.service';
-import { Credential, CredentialDocument } from './schemas/credential.schema';
+import { KeyPairFactory } from './factories/keypair.factory';
+import { CredentialsRepository } from './repositories/credentials.repository';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Credential } from './schemas/credential.schema';
+import { ConfigService } from '@nestjs/config';
 
 describe('CredentialsService', () => {
-  let configService: ConfigService;
-  let credentialsService: CredentialsService;
-  let credentialModel: Model<CredentialDocument>;
+  let factory: KeyPairFactory;
+  let repository: CredentialsRepository;
+  let service: CredentialsService;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -17,307 +22,165 @@ describe('CredentialsService', () => {
           provide: getModelToken(Credential.name),
           useValue: Model,
         },
+        KeyPairFactory,
+        CredentialsRepository,
+        SaltFactory,
+        SecretFactory,
         ConfigService,
         CredentialsService,
       ],
     }).compile();
 
-    credentialModel = moduleRef.get<Model<CredentialDocument>>(
-      getModelToken(Credential.name),
-    );
-    configService = moduleRef.get<ConfigService>(ConfigService);
-    credentialsService = moduleRef.get<CredentialsService>(CredentialsService);
+    factory = moduleRef.get<KeyPairFactory>(KeyPairFactory);
+    repository = moduleRef.get<CredentialsRepository>(CredentialsRepository);
+    service = moduleRef.get<CredentialsService>(CredentialsService);
   });
 
   describe('create', () => {
-    it('should fail when secret key in undefined', () => {
+    it('should fail when repository raise an error', () => {
       // arrange
-      const configServiceSpy = jest
-        .spyOn(configService, 'get')
-        .mockReturnValueOnce(undefined);
-
-      // act
-      const actual = expect(credentialsService.create('API_KEY', {}));
-
-      // assert
-      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      return actual.rejects.toMatch(/missing SECRET_KEY configuration/);
-    });
-
-    it('should fail when api key already exists', () => {
-      // arrange
-      const configServiceSpy = jest
-        .spyOn(configService, 'get')
-        .mockReturnValueOnce('SECRET_KEY');
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'create')
-        .mockImplementationOnce(() =>
-          Promise.reject(new Error('duplicate key error collection')),
-        );
-
-      // act
-      const actual = expect(credentialsService.create('API_KEY', {}));
-
-      // assert
-      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      expect(credentialModelSpy).toBeCalledWith({
+      const keyPair: KeyPair = {
         apiKey: 'API_KEY',
+        apiSecret: 'API_SECRET',
+        salt: 'SALT',
         status: 'Disable',
-      });
+      };
+      const factorySpy = jest
+        .spyOn(factory, 'create')
+        .mockReturnValueOnce(keyPair);
+      const repositorySpy = jest
+        .spyOn(repository, 'create')
+        .mockRejectedValueOnce(new Error('repository error'));
 
-      return actual.rejects.toMatch(/duplicate key error collection/);
+      // act
+      const actual = expect(service.create({}));
+
+      // assert
+      expect(factorySpy).toBeCalledWith('Disable');
+      expect(repositorySpy).toBeCalledWith(keyPair);
+      return actual.rejects.toMatch(/repository error/);
     });
 
     it('should create a disable credentials key pair', () => {
       // arrange
-      const configServiceSpy = jest
-        .spyOn(configService, 'get')
-        .mockReturnValueOnce('SECRET_KEY');
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'create')
-        .mockImplementationOnce(() =>
-          Promise.resolve({ apiKey: 'API_KEY', status: 'Disable' }),
-        );
+      const keyPair: KeyPair = {
+        apiKey: 'API_KEY',
+        apiSecret: 'API_SECRET',
+        salt: 'SALT',
+        status: 'Disable',
+      };
+      const factorySpy = jest
+        .spyOn(factory, 'create')
+        .mockReturnValueOnce(keyPair);
+      const repositorySpy = jest
+        .spyOn(repository, 'create')
+        .mockResolvedValueOnce(keyPair);
 
       // act
-      const actual = expect(credentialsService.create('API_KEY', {}));
+      const actual = expect(service.create({}));
 
       // assert
-      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      expect(credentialModelSpy).toBeCalledWith({
-        apiKey: 'API_KEY',
-        status: 'Disable',
-      });
-
-      return actual.resolves.toEqual({
-        apiKey: 'API_KEY',
-        apiSecret:
-          '3783823e89b520104f8ceec4a0606b041ae4daaceda05d6f649ead01e775079b',
-        status: 'Disable',
-      });
+      expect(factorySpy).toBeCalledWith('Disable');
+      expect(repositorySpy).toBeCalledWith(keyPair);
+      return actual.resolves.toEqual(keyPair);
     });
 
     it('should create a enable credentials key pair', () => {
       // arrange
-      const configServiceSpy = jest
-        .spyOn(configService, 'get')
-        .mockReturnValueOnce('SECRET_KEY');
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'create')
-        .mockImplementationOnce(() =>
-          Promise.resolve({ apiKey: 'API_KEY', status: 'Enable' }),
-        );
+      const keyPair: KeyPair = {
+        apiKey: 'API_KEY',
+        apiSecret: 'API_SECRET',
+        salt: 'SALT',
+        status: 'Enable',
+      };
+      const factorySpy = jest
+        .spyOn(factory, 'create')
+        .mockReturnValueOnce(keyPair);
+      const repositorySpy = jest
+        .spyOn(repository, 'create')
+        .mockResolvedValueOnce(keyPair);
 
       // act
-      const actual = expect(
-        credentialsService.create('API_KEY', { enable: true }),
-      );
+      const actual = expect(service.create({ enable: true }));
 
       // assert
-      expect(configServiceSpy).toBeCalledWith('SECRET_KEY');
-      expect(credentialModelSpy).toBeCalledWith({
-        apiKey: 'API_KEY',
-        status: 'Enable',
-      });
-
-      return actual.resolves.toEqual({
-        apiKey: 'API_KEY',
-        apiSecret:
-          '3783823e89b520104f8ceec4a0606b041ae4daaceda05d6f649ead01e775079b',
-        status: 'Enable',
-      });
+      expect(factorySpy).toBeCalledWith('Enable');
+      expect(repositorySpy).toBeCalledWith(keyPair);
+      return actual.resolves.toEqual(keyPair);
     });
   });
 
   describe('enable', () => {
-    it('shoud fail when api key does not exists', () => {
+    it('should fail when repository raise an error', () => {
       // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 0, nModified: 0, ok: 1 });
+      const repositorySpy = jest
+        .spyOn(repository, 'update')
+        .mockRejectedValue(new Error('repository error'));
 
       // act
-      const actual = expect(credentialsService.enable('API_KEY'));
+      const actual = expect(service.enable('API_KEY'));
 
       // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Enable',
-        },
-      );
-
-      return actual.rejects.toMatch(/api key not found/);
-    });
-
-    it('shoud fail when moongose raises a unknow error', () => {
-      // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockRejectedValueOnce(new Error('unknow error'));
-
-      // act
-      const actual = expect(credentialsService.enable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Enable',
-        },
-      );
-
-      return actual.rejects.toMatch(/unknow error/);
-    });
-
-    it('shoud update api key status', () => {
-      // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 1, nModified: 1, ok: 1 });
-
-      // act
-      const actual = expect(credentialsService.enable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Enable',
-        },
-      );
-
-      return actual.resolves.toEqual({
+      expect(repositorySpy).toBeCalledWith({
         apiKey: 'API_KEY',
         status: 'Enable',
       });
+      return actual.rejects.toMatch(/repository error/);
     });
 
-    it('shoud ignore update without modification', () => {
+    it('should update status from api key', () => {
       // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 1, nModified: 0, ok: 1 });
-
-      // act
-      const actual = expect(credentialsService.enable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Enable',
-        },
-      );
-
-      return actual.resolves.toEqual({
+      const keyPair: KeyPair = {
         apiKey: 'API_KEY',
         status: 'Enable',
-      });
+      };
+      const repositorySpy = jest
+        .spyOn(repository, 'update')
+        .mockResolvedValue(keyPair);
+
+      // act
+      const actual = expect(service.enable('API_KEY'));
+
+      // assert
+      expect(repositorySpy).toBeCalledWith(keyPair);
+      return actual.resolves.toEqual(keyPair);
     });
   });
 
   describe('disable', () => {
-    it('shoud fail when api key does not exists', () => {
+    it('should fail when repository raise an error', () => {
       // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 0, nModified: 0, ok: 1 });
+      const repositorySpy = jest
+        .spyOn(repository, 'update')
+        .mockRejectedValue(new Error('repository error'));
 
       // act
-      const actual = expect(credentialsService.disable('API_KEY'));
+      const actual = expect(service.disable('API_KEY'));
 
       // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Disable',
-        },
-      );
-
-      return actual.rejects.toMatch(/api key not found/);
-    });
-
-    it('shoud fail when moongose raises a unknow error', () => {
-      // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockRejectedValueOnce(new Error('unknow error'));
-
-      // act
-      const actual = expect(credentialsService.disable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Disable',
-        },
-      );
-
-      return actual.rejects.toMatch(/unknow error/);
-    });
-
-    it('shoud update api key status', () => {
-      // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 1, nModified: 1, ok: 1 });
-
-      // act
-      const actual = expect(credentialsService.disable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Disable',
-        },
-      );
-
-      return actual.resolves.toEqual({
+      expect(repositorySpy).toBeCalledWith({
         apiKey: 'API_KEY',
         status: 'Disable',
       });
+      return actual.rejects.toMatch(/repository error/);
     });
 
-    it('shoud ignore update without modification', () => {
+    it('should update status from api key', () => {
       // arrange
-      const credentialModelSpy = jest
-        .spyOn(credentialModel, 'updateOne')
-        .mockResolvedValueOnce({ n: 1, nModified: 0, ok: 1 });
-
-      // act
-      const actual = expect(credentialsService.disable('API_KEY'));
-
-      // assert
-      expect(credentialModelSpy).toBeCalledWith(
-        {
-          apiKey: 'API_KEY',
-        },
-        {
-          status: 'Disable',
-        },
-      );
-
-      return actual.resolves.toEqual({
+      const keyPair: KeyPair = {
         apiKey: 'API_KEY',
         status: 'Disable',
-      });
+      };
+      const repositorySpy = jest
+        .spyOn(repository, 'update')
+        .mockResolvedValue(keyPair);
+
+      // act
+      const actual = expect(service.disable('API_KEY'));
+
+      // assert
+      expect(repositorySpy).toBeCalledWith(keyPair);
+      return actual.resolves.toEqual(keyPair);
     });
   });
 
